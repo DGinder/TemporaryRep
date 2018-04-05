@@ -65,5 +65,39 @@ public class ProtocolClient extends GameConnectionClient{
 		 // etc….. 
 		} 
 	}
+	
+	public void sendJoinMessage() { // format: join, localId
+		try{ 
+			sendPacket(new String("join," + id.toString()));
+		} 
+		catch (IOException e) { 
+			e.printStackTrace();
+		} 
+		}
+	
+	public void sendCreateMessage(Vector3 pos){ 
+		// format: (create, localId, x,y,z)
+		try{ 
+			String message = new String("create," + id.toString());
+			message += "," + pos.getX()+"," + pos.getY() + "," + pos.getZ();
+			sendPacket(message);
+		}
+		catch (IOException e) { 
+			e.printStackTrace();
+		} 
+	}
+	public void sendByeMessage(){ 
+		// etc…..
+	}
+	public void sendDetailsForMessage(UUID remId, Vector3D pos){ 
+		// etc…..
+	}
+	public void sendMoveMessage(Vector3D pos){ 		
+		// etc….. 
+	}
+	
+	
+	
+	
 }
 	

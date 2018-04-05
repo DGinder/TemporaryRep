@@ -2,16 +2,24 @@ package temp;
 
 import java.awt.*;
 import java.io.*;
+import java.util.Iterator;
+import java.util.UUID;
+import java.util.Vector;
+
 import ray.rage.*;
 import ray.rage.game.*;
 import ray.rage.rendersystem.*;
 import ray.rage.rendersystem.Renderable.*;
 import ray.rage.scene.*;
 import ray.rage.scene.Camera.Frustum.*;
+import ray.rml.Vector3;
 import temp.MoveForwardAction;
 import ray.rage.rendersystem.gl4.GL4RenderSystem;
 import ray.input.*;
 import ray.input.action.*;
+
+import ray.networking.IGameConnection.ProtocolType;
+
 
 public class MyGame extends ray.rage.game.VariableFrameRateGame{
 
@@ -23,13 +31,23 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 	private SceneNode dolphinN2;
 	private Action moveFwdAct;
 	
-	public MyGame(){
+	private String serverAddress;
+	private int serverPort;
+	private ProtocolType serverProtocol;
+	private ProtocolClient protClient;
+	private boolean isClientConnected;
+	private Vector<UUID> gameObjectsToRemove;
+	
+	public MyGame(String serverAddr, int sPort){
 		super();
 		
+		this.serverAddress = serverAddr;
+		this.serverPort = sPort;
+		this.serverProtocol = ProtocolType.TCP;
 	}
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		Game game = new MyGame();
+		Game game = new MyGame(args[0], Integer.parseInt(args[1]), args[2]);
         
 		try {
             game.startup();
@@ -98,7 +116,80 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 
 	    }
 	 protected void update(Engine engine) {
+		 processNetworking(elapsTime)
 		 im.update(elapsTime);
 	 }
-	
+	 
+	 private void setupNetworking(){ 
+		 gameObjectsToRemove = new Vector<UUID>();
+		 isClientConnected = false;
+		 try{ 
+			 protClient = new ProtocolClient(InetAddress.
+					 getByName(serverAddress), serverPort, serverProtocol, this);
+		 } 
+		 catch (UnknownHostException e) { 
+			 e.printStackTrace();
+		 } 
+		 catch (IOException e) { 
+			 e.printStackTrace();
+		 }
+		 if (protClient == null){ 
+			 System.out.println("missing protocol host"); 
+			 }
+		 else{ 
+			 // ask client protocol to send initial join message
+			 //to server, with a unique identifier for this client
+			 protClient.sendJoinMessage();
+		 } 
+	 }
+	 
+	 protected void processNetworking(float elapsTime){ 
+		 // Process packets received by the client from the server
+		 if (protClient != null)
+			 protClient.processPackets();
+		 // remove ghost avatars for players who have left the game
+		 Iterator<UUID> it = gameObjectsToRemove.iterator();
+		 while(it.hasNext()){ 
+			 sm.destroySceneNode(it.next().toString());
+		 }
+		 gameObjectsToRemove.clear();
+	 }
+	 
+	 public Vector3 getPlayerPosition(){ 
+		 SceneNode dolphinN = sm.getSceneNode("dolphinNode");
+		 return dolphinN.getWorldPosition();
+	 }
+	 
+	 public void addGhostAvatarToGameWorld(GhostAvatar avatar)
+			 throws IOException{ 
+		 if (avatar != null){ 
+			 Entity ghostE = sm.createEntity("ghost", "whatever.obj");
+			 ghostE.setPrimitive(Primitive.TRIANGLES);
+			 SceneNode ghostN = sm.getRootSceneNode().
+			 createChildSceneNode(avatar.getID().toString());
+			 ghostN.attachObject(ghostE);
+			 //ghostN.setLocalPosition(desired location...);
+			 avatar.setNode(ghostN);
+			 avatar.setEntity(ghostE);
+			 //avatar.setPosition(node’s position... maybe redundant);
+		 } 
+	 }
+	 
+	 public void removeGhostAvatarFromGameWorld(GhostAvatar avatar){ 
+		 if(avatar != null) 
+			 gameObjectsToRemove.add(avatar.getID());
+	 }
+	 
+	 private class SendCloseConnectionPacketAction extends AbstractInputAction{ 
+		 // for leaving the game... need to attach to an input device
+		 @Override
+		 public void performAction(float time, Event evt){ 
+			 if(protClient != null && isClientConnected == true){ 
+				 protClient.sendByeMessage();
+			 } 
+		 } 
+	 }
+	 
+	 
+	 
 }
