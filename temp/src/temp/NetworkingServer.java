@@ -5,16 +5,11 @@ import ray.networking.IGameConnection.ProtocolType;
 
 public class NetworkingServer {
 	private GameServerUDP thisUDPServer;
-	private GameServerTCP thisTCPServer;
 	
 	public NetworkingServer(int serverPort, String protocol){ 
 		try{ 
-			if(protocol.toUpperCase().compareTo("TCP") == 0){ 
-				thisTCPServer = new GameServerTCP(serverPort);
-			}
-			else{ 
-				thisUDPServer = new GameServerUDP(serverPort);
-			}
+			System.out.println("Server");
+			thisUDPServer = new GameServerUDP(serverPort);
 		}
 		catch (IOException e){ 
 			e.printStackTrace();

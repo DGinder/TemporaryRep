@@ -2,6 +2,8 @@ package temp;
 
 import java.awt.*;
 import java.io.*;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.UUID;
 import java.util.Vector;
@@ -29,7 +31,7 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 	private Camera camera;
 	private SceneNode dolphinN;
 	private SceneNode dolphinN2;
-	private Action moveFwdAct;
+	private Action moveFwdAct, quit;
 	
 	private String serverAddress;
 	private int serverPort;
@@ -37,17 +39,21 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 	private ProtocolClient protClient;
 	private boolean isClientConnected;
 	private Vector<UUID> gameObjectsToRemove;
+	private boolean isConnected;
+	private SceneManager sman;
+	private String avatID;
 	
 	public MyGame(String serverAddr, int sPort){
 		super();
 		
 		this.serverAddress = serverAddr;
 		this.serverPort = sPort;
-		this.serverProtocol = ProtocolType.TCP;
+		this.serverProtocol = ProtocolType.UDP;
+		isConnected = true;
 	}
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		Game game = new MyGame(args[0], Integer.parseInt(args[1]), args[2]);
+		Game game = new MyGame(args[0], Integer.parseInt(args[1]));
         
 		try {
             game.startup();
@@ -70,8 +76,7 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 	@Override
     protected void setupCameras(SceneManager sm, RenderWindow rw) {
     	SceneNode rootNode = sm.getRootSceneNode();
-    	Camera camera = sm.createCamera("MainCamera",
-    	Projection.PERSPECTIVE);
+    	Camera camera = sm.createCamera("MainCamera", Projection.PERSPECTIVE);
     	rw.getViewport(0).setCamera(camera);
     	SceneNode cameraN =
     	rootNode.createChildSceneNode("MainCameraNode");
@@ -82,6 +87,7 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
     }
 	 @Override
 	    protected void setupScene(Engine eng, SceneManager sm) throws IOException {
+		  	sman=sm;
 	        Entity dolphinE = sm.createEntity("myDolphin", "dolphinHighPoly.obj");
 	        dolphinE.setPrimitive(Primitive.TRIANGLES);
 
@@ -90,6 +96,8 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 	        dolphinN.attachObject(dolphinE);
 	        
 	        
+	        
+	        setupNetworking();
 	        setupInputs();
 	        
 	        sm.getAmbientLight().setIntensity(new Color(.1f, .1f, .1f));
@@ -102,21 +110,25 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 			
 			SceneNode plightNode = sm.getRootSceneNode().createChildSceneNode("plightNode");
 	        plightNode.attachObject(plight);
+	        
+	        
 	    }
 	 protected void setupInputs(){ 
 			String kbName = im.getKeyboardName();
-			String gpName = im.getFirstGamepadName();
+			//String gpName = im.getFirstGamepadName();
 			
 			SceneNode dolphinN = getEngine().getSceneManager().getSceneNode("myDolphinNode");
 			
-			moveFwdAct = new MoveForwardAction(dolphinN);
-
-			im.associateAction(gpName, net.java.games.input.Component.Identifier.Button._3, moveFwdAct , InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+			moveFwdAct = new MoveForwardAction(dolphinN, protClient);
+			quit = new SendCloseConnectionPacketAction();
 			
+			//im.associateAction(gpName, net.java.games.input.Component.Identifier.Button._3, moveFwdAct , InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+			im.associateAction(kbName, net.java.games.input.Component.Identifier.Key.W, moveFwdAct , InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+			im.associateAction(kbName, net.java.games.input.Component.Identifier.Key.P, quit , InputManager.INPUT_ACTION_TYPE.ON_PRESS_ONLY);
 
 	    }
 	 protected void update(Engine engine) {
-		 processNetworking(elapsTime)
+		 processNetworking(elapsTime);
 		 im.update(elapsTime);
 	 }
 	 
@@ -124,8 +136,7 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 		 gameObjectsToRemove = new Vector<UUID>();
 		 isClientConnected = false;
 		 try{ 
-			 protClient = new ProtocolClient(InetAddress.
-					 getByName(serverAddress), serverPort, serverProtocol, this);
+			 protClient = new ProtocolClient(InetAddress.getByName(serverAddress), serverPort, serverProtocol, this);
 		 } 
 		 catch (UnknownHostException e) { 
 			 e.printStackTrace();
@@ -150,45 +161,62 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 		 // remove ghost avatars for players who have left the game
 		 Iterator<UUID> it = gameObjectsToRemove.iterator();
 		 while(it.hasNext()){ 
-			 sm.destroySceneNode(it.next().toString());
+			 sman.destroySceneNode(it.next().toString());
 		 }
 		 gameObjectsToRemove.clear();
+		
+	 
 	 }
 	 
 	 public Vector3 getPlayerPosition(){ 
-		 SceneNode dolphinN = sm.getSceneNode("dolphinNode");
+		 SceneNode dolphinN = sman.getSceneNode("myDolphinNode");
 		 return dolphinN.getWorldPosition();
 	 }
 	 
-	 public void addGhostAvatarToGameWorld(GhostAvatar avatar)
-			 throws IOException{ 
+	 //some reason does nothing
+	 public void addGhostAvatarToGameWorld(GhostAvatar avatar) throws IOException{ 
 		 if (avatar != null){ 
-			 Entity ghostE = sm.createEntity("ghost", "whatever.obj");
+			 Entity ghostE = sman.createEntity("ghost", "cone.obj");
 			 ghostE.setPrimitive(Primitive.TRIANGLES);
-			 SceneNode ghostN = sm.getRootSceneNode().
-			 createChildSceneNode(avatar.getID().toString());
+			 SceneNode ghostN = sman.getRootSceneNode().createChildSceneNode(avatar.getID().toString());
 			 ghostN.attachObject(ghostE);
-			 //ghostN.setLocalPosition(desired location...);
+			 ghostN.setLocalPosition(2.0f, 0.0f, -1.5f);
 			 avatar.setNode(ghostN);
 			 avatar.setEntity(ghostE);
-			 //avatar.setPosition(node’s position... maybe redundant);
+			 avatar.setInitialPosition(2.0f, 0.0f, -1.5f);
+			 
+			 avatID = avatar.getID().toString();
+			 System.out.println(avatID);
+
 		 } 
 	 }
 	 
+	 //still need to call
 	 public void removeGhostAvatarFromGameWorld(GhostAvatar avatar){ 
 		 if(avatar != null) 
 			 gameObjectsToRemove.add(avatar.getID());
 	 }
 	 
+	 public void updateGhost(Vector3 p){
+		 SceneNode avatar = sman.getSceneNode(avatID);
+		 avatar.setLocalPosition(p);
+	 }
+	 
 	 private class SendCloseConnectionPacketAction extends AbstractInputAction{ 
 		 // for leaving the game... need to attach to an input device
-		 @Override
-		 public void performAction(float time, Event evt){ 
-			 if(protClient != null && isClientConnected == true){ 
+		@Override
+		public void performAction(float arg0, net.java.games.input.Event arg1) {
+			// TODO Auto-generated method stub
+			if(protClient != null && isClientConnected == true){ 
 				 protClient.sendByeMessage();
-			 } 
-		 } 
+			 }
+		} 
 	 }
+
+	public void setIsConnected(boolean b) {
+		// TODO Auto-generated method stub
+		isConnected = b;
+	}
 	 
 	 
 	 
