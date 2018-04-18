@@ -107,7 +107,7 @@ public class GameServerUDP extends GameConnectionServer<UUID>{
 		
 		public void sendWantsDetailsMessages(UUID clientID){ 
 			try{ 
-				String message = new String("wsda," + clientID.toString());
+				String message = new String("wsds," + clientID.toString());
 				forwardPacketToAll(message, clientID);
 			}
 			catch (IOException e) { 

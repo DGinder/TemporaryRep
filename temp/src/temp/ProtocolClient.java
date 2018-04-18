@@ -57,14 +57,15 @@ public class ProtocolClient extends GameConnectionClient{
 			if(messageTokens[0].compareTo("wsds") == 0){ // rec. “wants…” 
 				// etc….. 
 				UUID ghostID = UUID.fromString(messageTokens[1]);
-				Vector3 ghostPosition = Vector3f.createFrom(Float.parseFloat(messageTokens[2]), Float.parseFloat(messageTokens[3]), Float.parseFloat(messageTokens[4]));
-				sendDetailsForMessage(ghostID, ghostPosition);
+				//Vector3 ghostPosition = Vector3f.createFrom(Float.parseFloat(messageTokens[2]), Float.parseFloat(messageTokens[3]), Float.parseFloat(messageTokens[4]));
+				Vector3 position = game.getdolpos();
+				sendDetailsForMessage(ghostID, position);
 			}
 			if(messageTokens[0].compareTo("move") == 0){ // rec. “move...”
 				// etc….. 
 				UUID ghostID = UUID.fromString(messageTokens[1]);
 				Vector3 ghostPosition = Vector3f.createFrom(Float.parseFloat(messageTokens[2]), Float.parseFloat(messageTokens[3]), Float.parseFloat(messageTokens[4]));
-				game.updateGhost(ghostPosition);
+				game.updateGhost(ghostID, ghostPosition);
 				sendMoveMessage(ghostPosition);
 			} 
 		}

@@ -30,7 +30,6 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 	private InputManager im =  new GenericInputManager();
 	private Camera camera;
 	private SceneNode dolphinN;
-	private SceneNode dolphinN2;
 	private Action moveFwdAct, quit;
 	
 	private String serverAddress;
@@ -41,6 +40,7 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 	private Vector<UUID> gameObjectsToRemove;
 	private boolean isConnected;
 	private SceneManager sman;
+	
 	private String avatID;
 	
 	public MyGame(String serverAddr, int sPort){
@@ -115,16 +115,16 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 	    }
 	 protected void setupInputs(){ 
 			String kbName = im.getKeyboardName();
-			String gpName = im.getFirstGamepadName();
+			//String gpName = im.getFirstGamepadName();
 			
 			SceneNode dolphinN = getEngine().getSceneManager().getSceneNode("myDolphinNode");
 			
 			moveFwdAct = new MoveForwardAction(dolphinN, protClient);
 			quit = new SendCloseConnectionPacketAction();
 			
-			im.associateAction(gpName, net.java.games.input.Component.Identifier.Button._3, moveFwdAct , InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
-			//im.associateAction(kbName, net.java.games.input.Component.Identifier.Key.W, moveFwdAct , InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
-			//im.associateAction(kbName, net.java.games.input.Component.Identifier.Key.P, quit , InputManager.INPUT_ACTION_TYPE.ON_PRESS_ONLY);
+			//im.associateAction(gpName, net.java.games.input.Component.Identifier.Button._3, moveFwdAct , InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+			im.associateAction(kbName, net.java.games.input.Component.Identifier.Key.W, moveFwdAct , InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+			im.associateAction(kbName, net.java.games.input.Component.Identifier.Key.P, quit , InputManager.INPUT_ACTION_TYPE.ON_PRESS_ONLY);
 
 	    }
 	 protected void update(Engine engine) {
@@ -186,9 +186,6 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 			 avatar.setEntity(ghostE);
 			 avatar.setInitialPosition(2.0f, 0.0f, -1.5f);
 			 
-			 
-			 System.out.println(avatID);
-
 		 } 
 	 }
 	 
@@ -198,7 +195,10 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 			 gameObjectsToRemove.add(avatar.getID());
 	 }
 	 
-	 public void updateGhost(Vector3 p){
+	 public void updateGhost(UUID ghostID, Vector3 p){
+		 if(avatID.equals(ghostID.toString()) == false) {
+			 System.out.println("siht");
+		 }
 		 SceneNode avatar = sman.getSceneNode(avatID);
 		 avatar.setLocalPosition(p);
 	 }
@@ -214,9 +214,13 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 		} 
 	 }
 
-	public void setIsConnected(boolean b) {
+	protected void setIsConnected(boolean b) {
 		// TODO Auto-generated method stub
 		isConnected = b;
+	}
+	
+	protected Vector3 getdolpos() {
+		return dolphinN.getLocalPosition();
 	}
 	 
 	 
