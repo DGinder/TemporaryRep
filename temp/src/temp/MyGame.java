@@ -115,16 +115,16 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 	    }
 	 protected void setupInputs(){ 
 			String kbName = im.getKeyboardName();
-			//String gpName = im.getFirstGamepadName();
+			String gpName = im.getFirstGamepadName();
 			
 			SceneNode dolphinN = getEngine().getSceneManager().getSceneNode("myDolphinNode");
 			
 			moveFwdAct = new MoveForwardAction(dolphinN, protClient);
 			quit = new SendCloseConnectionPacketAction();
 			
-			//im.associateAction(gpName, net.java.games.input.Component.Identifier.Button._3, moveFwdAct , InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
-			im.associateAction(kbName, net.java.games.input.Component.Identifier.Key.W, moveFwdAct , InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
-			im.associateAction(kbName, net.java.games.input.Component.Identifier.Key.P, quit , InputManager.INPUT_ACTION_TYPE.ON_PRESS_ONLY);
+			im.associateAction(gpName, net.java.games.input.Component.Identifier.Button._3, moveFwdAct , InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+			//im.associateAction(kbName, net.java.games.input.Component.Identifier.Key.W, moveFwdAct , InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+			//im.associateAction(kbName, net.java.games.input.Component.Identifier.Key.P, quit , InputManager.INPUT_ACTION_TYPE.ON_PRESS_ONLY);
 
 	    }
 	 protected void update(Engine engine) {
@@ -178,14 +178,15 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 		 if (avatar != null){ 
 			 Entity ghostE = sman.createEntity("ghost", "cone.obj");
 			 ghostE.setPrimitive(Primitive.TRIANGLES);
-			 SceneNode ghostN = sman.getRootSceneNode().createChildSceneNode(avatar.getID().toString());
+			 avatID = avatar.getID().toString();
+			 SceneNode ghostN = sman.getRootSceneNode().createChildSceneNode(avatID);
 			 ghostN.attachObject(ghostE);
 			 ghostN.setLocalPosition(2.0f, 0.0f, -1.5f);
 			 avatar.setNode(ghostN);
 			 avatar.setEntity(ghostE);
 			 avatar.setInitialPosition(2.0f, 0.0f, -1.5f);
 			 
-			 avatID = avatar.getID().toString();
+			 
 			 System.out.println(avatID);
 
 		 } 
