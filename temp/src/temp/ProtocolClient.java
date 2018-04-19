@@ -104,7 +104,7 @@ public class ProtocolClient extends GameConnectionClient{
 	public void sendDetailsForMessage(UUID remId, Vector3 pos){ 
 		// etc…..
 		try{ 
-			String message = new String("wsds," + id.toString() + remId.toString());
+			String message = new String("dsfr," + id.toString() + "," + remId.toString());
 			message += "," + pos.x()+"," + pos.y() + "," + pos.z();
 			sendPacket(message);
 		}

@@ -41,8 +41,6 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 	private boolean isConnected;
 	private SceneManager sman;
 	
-	private String avatID;
-	
 	public MyGame(String serverAddr, int sPort){
 		super();
 		
@@ -178,8 +176,7 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 		 if (avatar != null){ 
 			 Entity ghostE = sman.createEntity("ghost", "cone.obj");
 			 ghostE.setPrimitive(Primitive.TRIANGLES);
-			 avatID = avatar.getID().toString();
-			 SceneNode ghostN = sman.getRootSceneNode().createChildSceneNode(avatID);
+			 SceneNode ghostN = sman.getRootSceneNode().createChildSceneNode(avatar.getID().toString());
 			 ghostN.attachObject(ghostE);
 			 ghostN.setLocalPosition(2.0f, 0.0f, -1.5f);
 			 avatar.setNode(ghostN);
@@ -196,10 +193,7 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 	 }
 	 
 	 public void updateGhost(UUID ghostID, Vector3 p){
-		 if(avatID.equals(ghostID.toString()) == false) {
-			 System.out.println("siht");
-		 }
-		 SceneNode avatar = sman.getSceneNode(avatID);
+		 SceneNode avatar = sman.getSceneNode(ghostID.toString());
 		 avatar.setLocalPosition(p);
 	 }
 	 
