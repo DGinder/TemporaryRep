@@ -66,7 +66,6 @@ public class ProtocolClient extends GameConnectionClient{
 				UUID ghostID = UUID.fromString(messageTokens[1]);
 				Vector3 ghostPosition = Vector3f.createFrom(Float.parseFloat(messageTokens[2]), Float.parseFloat(messageTokens[3]), Float.parseFloat(messageTokens[4]));
 				game.updateGhost(ghostID, ghostPosition);
-				sendMoveMessage(ghostPosition);
 			} 
 		}
 	}
