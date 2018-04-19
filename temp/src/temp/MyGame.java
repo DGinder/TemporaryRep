@@ -193,7 +193,8 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 	 }
 	 
 	 public void updateGhost(UUID ghostID, Vector3 p){
-		 SceneNode avatar = sman.getSceneNode(ghostID.toString());
+		 //SceneNode avatar = sman.getSceneNode(ghostID.toString());
+		 SceneNode avatar = this.getEngine().getSceneManager().getSceneNode(ghostID.toString());
 		 avatar.setLocalPosition(p);
 	 }
 	 

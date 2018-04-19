@@ -94,11 +94,11 @@ public class GameServerUDP extends GameConnectionServer<UUID>{
 		
 		public void sndDetailsMsg(UUID clientID, UUID remoteId, String[] position){ 
 			try{ 
-				String message = new String("dsfr," + clientID.toString());
+				String message = new String("dsfr," + remoteId.toString());
 				message += "," + position[0];
 				message += "," + position[1];
 				message += "," + position[2];
-				sendPacket(message, remoteId);
+				sendPacket(message, clientID);
 			}
 			catch (IOException e) { 
 				e.printStackTrace();

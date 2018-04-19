@@ -1,0 +1,1 @@
+java -Dsun.java2d.d3d=false src.tenp.NetworkingServer 6000 UDP
