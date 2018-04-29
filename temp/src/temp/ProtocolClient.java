@@ -46,18 +46,19 @@ public class ProtocolClient extends GameConnectionClient{
 				// format: bye, remoteId
 				UUID ghostID = UUID.fromString(messageTokens[1]);
 				removeGhostAvatar(ghostID);
+				
 			}
 			if ((messageTokens[0].compareTo("dsfr") == 0 ) || (messageTokens[0].compareTo("create") == 0)){ // receive “dsfr”{ 
 				// format: create, remoteId, x,y,z or dsfr, remoteId, x,y,z
 				UUID ghostID = UUID.fromString(messageTokens[1]);
 				Vector3 ghostPosition = Vector3f.createFrom(Float.parseFloat(messageTokens[2]), Float.parseFloat(messageTokens[3]), Float.parseFloat(messageTokens[4]));
-				createGhostAvatar(ghostID, ghostPosition); 
+				createGhostAvatar(ghostID, ghostPosition);
+			
 			}
 //---------------------check later unsure			
 			if(messageTokens[0].compareTo("wsds") == 0){ // rec. “wants…” 
 				// etc….. 
 				UUID ghostID = UUID.fromString(messageTokens[1]);
-				//Vector3 ghostPosition = Vector3f.createFrom(Float.parseFloat(messageTokens[2]), Float.parseFloat(messageTokens[3]), Float.parseFloat(messageTokens[4]));
 				Vector3 position = game.getdolpos();
 				sendDetailsForMessage(ghostID, position);
 			}
@@ -102,6 +103,7 @@ public class ProtocolClient extends GameConnectionClient{
 	}
 	public void sendDetailsForMessage(UUID remId, Vector3 pos){ 
 		// etc…..
+		//remID is the client that wants id is random id for ghost
 		try{ 
 			String message = new String("dsfr," + id.toString() + "," + remId.toString());
 			message += "," + pos.x()+"," + pos.y() + "," + pos.z();
@@ -140,6 +142,7 @@ public class ProtocolClient extends GameConnectionClient{
 		int i = 0;
 		while(ghostAvatars.elementAt(i) != null){
 			if(ghostAvatars.elementAt(i).getID() == ghostID){
+				game.removeGhostAvatarFromGameWorld(ghostAvatars.elementAt(i));
 				ghostAvatars.remove(i);
 			}
 		}

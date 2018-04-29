@@ -41,6 +41,7 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 	private boolean isConnected;
 	private SceneManager sman;
 	
+	
 	public MyGame(String serverAddr, int sPort){
 		super();
 		
@@ -76,9 +77,9 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
     	SceneNode rootNode = sm.getRootSceneNode();
     	Camera camera = sm.createCamera("MainCamera", Projection.PERSPECTIVE);
     	rw.getViewport(0).setCamera(camera);
-    	SceneNode cameraN =
-    	rootNode.createChildSceneNode("MainCameraNode");
+    	SceneNode cameraN = rootNode.createChildSceneNode("MainCameraNode");
     	cameraN.attachObject(camera);
+    	cameraN.setLocalPosition(0f, 0f, -5f);
     	camera.setMode('n');
     	camera.getFrustum().setFarClipDistance(1000.0f);
 
@@ -113,14 +114,14 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 	    }
 	 protected void setupInputs(){ 
 			String kbName = im.getKeyboardName();
-			String gpName = im.getFirstGamepadName();
+			//String gpName = im.getFirstGamepadName();
 			
 			SceneNode dolphinN = getEngine().getSceneManager().getSceneNode("myDolphinNode");
 			
 			moveFwdAct = new MoveForwardAction(dolphinN, protClient);
 			quit = new SendCloseConnectionPacketAction();
 			
-			im.associateAction(gpName, net.java.games.input.Component.Identifier.Button._3, moveFwdAct , InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+			//im.associateAction(gpName, net.java.games.input.Component.Identifier.Button._3, moveFwdAct , InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
 			im.associateAction(kbName, net.java.games.input.Component.Identifier.Key.W, moveFwdAct , InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
 			im.associateAction(kbName, net.java.games.input.Component.Identifier.Key.P, quit , InputManager.INPUT_ACTION_TYPE.ON_PRESS_ONLY);
 
@@ -171,7 +172,7 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 		 return dolphinN.getWorldPosition();
 	 }
 	 
-	 //some reason does nothing
+	 
 	 public void addGhostAvatarToGameWorld(GhostAvatar avatar) throws IOException{ 
 		 if (avatar != null){ 
 			 Entity ghostE = sman.createEntity("ghost", "cone.obj");
@@ -205,6 +206,8 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 			// TODO Auto-generated method stub
 			if(protClient != null && isClientConnected == true){ 
 				 protClient.sendByeMessage();
+				 shutdown();
+				 exit();
 			 }
 		} 
 	 }
