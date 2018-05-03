@@ -18,6 +18,8 @@ public class ProtocolClient extends GameConnectionClient{
 	private UUID id;
 	private Vector<GhostAvatar> ghostAvatars;
 	
+	private Vector<GhostNPC> ghostNPCs;
+	
 	public ProtocolClient(InetAddress remAddr, int remPort, ProtocolType pType, MyGame game) throws IOException{ 
 		super(remAddr, remPort, pType);
 		this.game = game;
@@ -55,7 +57,6 @@ public class ProtocolClient extends GameConnectionClient{
 				createGhostAvatar(ghostID, ghostPosition);
 			
 			}
-//---------------------check later unsure			
 			if(messageTokens[0].compareTo("wsds") == 0){ // rec. “wants…” 
 				// etc….. 
 				UUID ghostID = UUID.fromString(messageTokens[1]);
@@ -124,13 +125,13 @@ public class ProtocolClient extends GameConnectionClient{
 			e.printStackTrace();
 		}
 	}
-	//--------------check later
+	
 	private void createGhostAvatar(UUID ghostID, Vector3 ghostPosition){
 		GhostAvatar avat = new GhostAvatar(ghostID, ghostPosition);
 		ghostAvatars.add(avat);
 		
 		try {
-			game.addGhostAvatarToGameWorld(avat);
+			game.addGhostAvatarToGameWorld(avat, ghostPosition);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -147,6 +148,35 @@ public class ProtocolClient extends GameConnectionClient{
 			}
 		}
 	}
+
+	private void createGhostNPC(int id, Vector3 position){ 
+		GhostNPC newNPC = new GhostNPC(id, position);
+		ghostNPCs.add(newNPC);
+		game.addGhostNPCtoGameWorld(newNPC);
+	}
+	
+	private void updateGhostNPC(int id, Vector3 position){ 
+		ghostNPCs.get(id).setPosition(position);
+	}
+	/*
+	// handle updates to NPC positions
+		// format: (mnpc,npcID,x,y,z)
+		if(messageTokens[0].compareTo("mnpc") == 0){ 
+			int ghostID = Integer.parseInt(messageTokens[1]);
+			Vector3 ghostPosition = Vector3f.createFrom(
+				Float.parseFloat(messageTokens[2]),
+				Float.parseFloat(messageTokens[2]),
+				Float.parseFloat(messageTokens[2]));
+			updateGhostNPC(ghostID, ghostPosition);
+		 }
+		 public void askForNPCinfo(){ 
+			 try{ 
+				 sendPacket(new String("needNPC," + id.toString()));
+		 }
+		 catch (IOException e){ 
+			 e.printStackTrace();
+		 } 
+		 }*/
 	
 }
 	

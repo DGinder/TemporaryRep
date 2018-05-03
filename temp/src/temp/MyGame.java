@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.UUID;
 import java.util.Vector;
 
+import temp.Camera3Pcontroller;
 import ray.rage.*;
 import ray.rage.game.*;
 import ray.rage.rendersystem.*;
@@ -15,6 +16,7 @@ import ray.rage.rendersystem.Renderable.*;
 import ray.rage.scene.*;
 import ray.rage.scene.Camera.Frustum.*;
 import ray.rml.Vector3;
+import ray.rml.Vector3f;
 import temp.MoveForwardAction;
 import ray.rage.rendersystem.gl4.GL4RenderSystem;
 import ray.input.*;
@@ -30,7 +32,7 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 	private InputManager im =  new GenericInputManager();
 	private Camera camera;
 	private SceneNode dolphinN;
-	private Action moveFwdAct, quit;
+	private Action moveFwdAct, moveBwdAct, moveLftAct, moveRgtAct,  quit;
 	
 	private String serverAddress;
 	private int serverPort;
@@ -41,6 +43,8 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 	private boolean isConnected;
 	private SceneManager sman;
 	
+	private SceneNode cameraNode;
+	private Camera3Pcontroller orbitController;
 	
 	public MyGame(String serverAddr, int sPort){
 		super();
@@ -74,12 +78,22 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 	
 	@Override
     protected void setupCameras(SceneManager sm, RenderWindow rw) {
-    	SceneNode rootNode = sm.getRootSceneNode();
+    	/*SceneNode rootNode = sm.getRootSceneNode();
     	Camera camera = sm.createCamera("MainCamera", Projection.PERSPECTIVE);
     	rw.getViewport(0).setCamera(camera);
     	SceneNode cameraN = rootNode.createChildSceneNode("MainCameraNode");
     	cameraN.attachObject(camera);
     	cameraN.setLocalPosition(0f, 0f, -5f);
+    	camera.setMode('n');
+    	camera.getFrustum().setFarClipDistance(1000.0f);*/
+    	
+		SceneNode rootNode = sm.getRootSceneNode();
+    	Camera camera = sm.createCamera("MainCamera",
+    	Projection.PERSPECTIVE);
+    	rw.getViewport(0).setCamera(camera);
+    	SceneNode cameraN =
+    	rootNode.createChildSceneNode("MainCameraNode");
+    	cameraN.attachObject(camera);
     	camera.setMode('n');
     	camera.getFrustum().setFarClipDistance(1000.0f);
 
@@ -98,6 +112,7 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 	        
 	        setupNetworking();
 	        setupInputs();
+	        setupOrbitCamera(eng, sm);
 	        
 	        sm.getAmbientLight().setIntensity(new Color(.1f, .1f, .1f));
 			
@@ -114,20 +129,34 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 	    }
 	 protected void setupInputs(){ 
 			String kbName = im.getKeyboardName();
-			//String gpName = im.getFirstGamepadName();
+			String gpName = im.getFirstGamepadName();
 			
 			SceneNode dolphinN = getEngine().getSceneManager().getSceneNode("myDolphinNode");
 			
 			moveFwdAct = new MoveForwardAction(dolphinN, protClient);
+			moveBwdAct = new MoveForwardAction(dolphinN, protClient);
+			moveLftAct = new MoveForwardAction(dolphinN, protClient);
+			moveRgtAct = new MoveForwardAction(dolphinN, protClient);
 			quit = new SendCloseConnectionPacketAction();
 			
-			//im.associateAction(gpName, net.java.games.input.Component.Identifier.Button._3, moveFwdAct , InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
 			im.associateAction(kbName, net.java.games.input.Component.Identifier.Key.W, moveFwdAct , InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+			im.associateAction(kbName, net.java.games.input.Component.Identifier.Key.S, moveBwdAct , InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+			im.associateAction(kbName, net.java.games.input.Component.Identifier.Key.A, moveLftAct , InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+			im.associateAction(kbName, net.java.games.input.Component.Identifier.Key.D, moveRgtAct , InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+
 			im.associateAction(kbName, net.java.games.input.Component.Identifier.Key.P, quit , InputManager.INPUT_ACTION_TYPE.ON_PRESS_ONLY);
+			
+			im.associateAction(gpName, net.java.games.input.Component.Identifier.Button._3, moveFwdAct , InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+			im.associateAction(gpName, net.java.games.input.Component.Identifier.Button._0, moveBwdAct , InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+			im.associateAction(gpName, net.java.games.input.Component.Identifier.Button._2, moveLftAct , InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+			im.associateAction(gpName, net.java.games.input.Component.Identifier.Button._1, moveRgtAct , InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+			
+			im.associateAction(gpName, net.java.games.input.Component.Identifier.Button._9, quit , InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
 
 	    }
 	 protected void update(Engine engine) {
 		 processNetworking(elapsTime);
+		 orbitController.updateCameraPosition();
 		 im.update(elapsTime);
 	 }
 	 
@@ -173,16 +202,16 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 	 }
 	 
 	 
-	 public void addGhostAvatarToGameWorld(GhostAvatar avatar) throws IOException{ 
+	 public void addGhostAvatarToGameWorld(GhostAvatar avatar,Vector3 ghostPosition) throws IOException{ 
 		 if (avatar != null){ 
 			 Entity ghostE = sman.createEntity("ghost", "cone.obj");
 			 ghostE.setPrimitive(Primitive.TRIANGLES);
 			 SceneNode ghostN = sman.getRootSceneNode().createChildSceneNode(avatar.getID().toString());
 			 ghostN.attachObject(ghostE);
-			 ghostN.setLocalPosition(2.0f, 0.0f, -1.5f);
+			 ghostN.setLocalPosition(ghostPosition);
 			 avatar.setNode(ghostN);
 			 avatar.setEntity(ghostE);
-			 avatar.setInitialPosition(2.0f, 0.0f, -1.5f);
+			 avatar.setPosition(ghostPosition);
 			 
 		 } 
 	 }
@@ -220,7 +249,14 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 	protected Vector3 getdolpos() {
 		return dolphinN.getLocalPosition();
 	}
-	 
+	
+	protected void setupOrbitCamera(Engine eng, SceneManager sm){ 
+    	dolphinN = sm.getSceneNode("myDolphinNode");
+    	SceneNode cameraN = sm.getSceneNode("MainCameraNode");
+    	Camera camera = sm.getCamera("MainCamera");
+    	String gpName = im.getFirstGamepadName();
+    	orbitController = new Camera3Pcontroller(camera, cameraN, dolphinN, gpName, im);
+	}
 	 
 	 
 }
