@@ -46,6 +46,8 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
 	private SceneNode cameraNode;
 	private Camera3Pcontroller orbitController;
 	
+	private int tempn = 0;
+	
 	public MyGame(String serverAddr, int sPort){
 		super();
 		
@@ -257,6 +259,20 @@ public class MyGame extends ray.rage.game.VariableFrameRateGame{
     	String gpName = im.getFirstGamepadName();
     	orbitController = new Camera3Pcontroller(camera, cameraN, dolphinN, gpName, im);
 	}
-	 
+	public void addGhostNPCtoGameWorld(GhostNPC newNPC) throws IOException {
+		// TODO Auto-generated method stub
+		 if (newNPC != null){ 
+			 
+			 Entity ghostNPCE = sman.createEntity("NPC"+tempn, "earth.obj");
+			 ghostNPCE.setPrimitive(Primitive.TRIANGLES);
+			 SceneNode ghostNPC = sman.getRootSceneNode().createChildSceneNode(Integer.toString(newNPC.getID()));
+			 ghostNPC.attachObject(ghostNPCE);
+			 newNPC.setNode(ghostNPC);
+			 newNPC.setEntity(ghostNPCE);
+			 newNPC.setPosition(newNPC.getPosition());
+			 tempn++;
+		 }
+	}
+		
 	 
 }

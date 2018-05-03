@@ -5,11 +5,15 @@ import java.net.InetAddress;
 import java.util.UUID;
 import ray.networking.server.GameConnectionServer;
 import ray.networking.server.IClientInfo;
+import ray.rml.Vector3f;
 
 
 public class GameServerUDP extends GameConnectionServer<UUID>{
-	public GameServerUDP(int localPort) throws IOException{ 
+	private NPCcontroller npcCtrl;
+	public GameServerUDP(int localPort, NPCcontroller n) throws IOException{ 
 		super(localPort, ProtocolType.UDP); 
+		npcCtrl = n;
+		
 	}
 	@Override
 	 public void processPacket(Object o, InetAddress senderIP, int sndPort){
@@ -63,7 +67,36 @@ public class GameServerUDP extends GameConnectionServer<UUID>{
 				String[] pos = {msgTokens[2], msgTokens[3], msgTokens[4]};
 				sendMoveMessages(clientID, pos);
 			}
+			
+			//--------------
+			if(msgTokens[0].compareTo("needNPC") == 0){ 
+				 //. . . 
+				String id = msgTokens[1];
+				sendNeedNPCMessages(id);
+				
+			 }
+			 
+			 if(msgTokens[0].compareTo("collide") == 0){ 
+				 //. . . 
+			 }
 		}
+	}
+		private void sendNeedNPCMessages(String id) {
+		// TODO Auto-generated method stub
+			for(int i = 0; i < 5; i ++) {
+			Vector3f loc = npcCtrl.getLoc(i);
+			String message = new String("needNPC,");
+			message += i + ",";
+			message += loc.x() + ",";
+			message += loc.y() + ",";
+			message += loc.z();
+			try {
+				sendPacketToAll(message);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}}
+		
 	}
 		public void sendJoinedMessage(UUID clientID, boolean success){
 			// format: join, success or join, failure
@@ -135,5 +168,22 @@ public class GameServerUDP extends GameConnectionServer<UUID>{
 			catch (IOException e) { 
 				e.printStackTrace();
 			} 
+		}
+		
+		public void sendNPCinfo(){ // informs clients of new NPC positions{ 
+			 for (int i=0; i<npcCtrl.getNumOfNPCs(); i++){  
+					 String message = new String("mnpc," + Integer.toString(i));
+					 message += "," + (npcCtrl.getNPC(i)).getX();
+					 message += "," + (npcCtrl.getNPC(i)).getY();
+					 message += "," + (npcCtrl.getNPC(i)).getZ();
+					 try {
+						sendPacketToAll(message);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+			 }
+		
 		}
 }

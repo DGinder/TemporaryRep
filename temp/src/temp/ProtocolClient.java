@@ -25,6 +25,7 @@ public class ProtocolClient extends GameConnectionClient{
 		this.game = game;
 		this.id = UUID.randomUUID();
 		this.ghostAvatars = new Vector<GhostAvatar>();
+		this.ghostNPCs = new Vector<GhostNPC>();
 	}
 	
 	@Override
@@ -37,7 +38,9 @@ public class ProtocolClient extends GameConnectionClient{
 				// format: join, success or join, failure
 				if(messageTokens[1].compareTo("success") == 0){ 
 					game.setIsConnected(true);
+					askForNPCinfo();
 					sendCreateMessage(game.getPlayerPosition());
+					
 				}
 				if(messageTokens[1].compareTo("failure") == 0){ 
 					game.setIsConnected(false);
@@ -69,6 +72,28 @@ public class ProtocolClient extends GameConnectionClient{
 				Vector3 ghostPosition = Vector3f.createFrom(Float.parseFloat(messageTokens[2]), Float.parseFloat(messageTokens[3]), Float.parseFloat(messageTokens[4]));
 				game.updateGhost(ghostID, ghostPosition);
 			} 
+		//---------
+			if(messageTokens[0].compareTo("needNPC") == 0) {
+				int id = Integer.parseInt(messageTokens[1]);
+				Vector3 NPCPosition = Vector3f.createFrom(Float.parseFloat(messageTokens[2]), Float.parseFloat(messageTokens[3]), Float.parseFloat(messageTokens[4]));
+				try {
+					createGhostNPC(id, NPCPosition);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			// handle updates to NPC positions
+			// format: (mnpc,npcID,x,y,z)
+			if(messageTokens[0].compareTo("mnpc") == 0){ 
+				int ghostID = Integer.parseInt(messageTokens[1]);
+				Vector3 ghostPosition = Vector3f.createFrom(
+						Float.parseFloat(messageTokens[2]),
+						Float.parseFloat(messageTokens[2]),
+						Float.parseFloat(messageTokens[2]));
+				updateGhostNPC(ghostID, ghostPosition);
+			}
+		
 		}
 	}
 	
@@ -148,8 +173,8 @@ public class ProtocolClient extends GameConnectionClient{
 			}
 		}
 	}
-
-	private void createGhostNPC(int id, Vector3 position){ 
+//0000
+	private void createGhostNPC(int id, Vector3 position) throws IOException{ 
 		GhostNPC newNPC = new GhostNPC(id, position);
 		ghostNPCs.add(newNPC);
 		game.addGhostNPCtoGameWorld(newNPC);
@@ -158,25 +183,19 @@ public class ProtocolClient extends GameConnectionClient{
 	private void updateGhostNPC(int id, Vector3 position){ 
 		ghostNPCs.get(id).setPosition(position);
 	}
-	/*
-	// handle updates to NPC positions
-		// format: (mnpc,npcID,x,y,z)
-		if(messageTokens[0].compareTo("mnpc") == 0){ 
-			int ghostID = Integer.parseInt(messageTokens[1]);
-			Vector3 ghostPosition = Vector3f.createFrom(
-				Float.parseFloat(messageTokens[2]),
-				Float.parseFloat(messageTokens[2]),
-				Float.parseFloat(messageTokens[2]));
-			updateGhostNPC(ghostID, ghostPosition);
-		 }
-		 public void askForNPCinfo(){ 
-			 try{ 
-				 sendPacket(new String("needNPC," + id.toString()));
-		 }
-		 catch (IOException e){ 
+	
+	
+	//--------------
+	public void askForNPCinfo(){ 
+		try{ 
+			for(int i = 0; i < 5; i++) {
+			sendPacket(new String("needNPC," + Integer.toString(i)));
+			}
+		}
+		catch (IOException e){ 
 			 e.printStackTrace();
-		 } 
-		 }*/
+		} 
+	}
 	
 }
 	

@@ -16,5 +16,6 @@ public class NPC {
 	//. . .
 	public void updateLocation() { 
 		 //. . . 
+		locX += 1;
 	}
 }
